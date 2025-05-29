@@ -1,0 +1,23 @@
+{
+    "development": {
+        "username": "postgres",
+        "password": "Jopkee17",
+        "database": "uniskills",
+        "host": "127.0.0.1",
+        "dialect": "postgres"
+    },
+    "test": {
+        "username": "postgres",
+        "password": "Jopkee17",
+        "database": "uniskills_test",
+        "host": "127.0.0.1",
+        "dialect": "postgres"
+    },
+    "production": {
+        "username": "postgres",
+        "password": "Jopkee17",
+        "database": "uniskills_prod",
+        "host": "127.0.0.1",
+        "dialect": "postgres"
+    }
+}
