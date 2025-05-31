@@ -3,25 +3,40 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASS,
-    {
-        host: process.env.DB_HOST || 'localhost',
-        dialect: 'postgres',
-        logging: process.env.NODE_ENV === 'development' ? console.log : false,
-        pool: { max: 5, min: 0, acquire: 30000, idle: 10000 },
-    }
-);
+const {
+  DB_HOST = 'localhost',
+  DB_PORT = 5432,
+  DB_NAME = 'uniskills',
+  DB_USER = 'postgres',
+  DB_PASSWORD = 'Jopkee17',
+  NODE_ENV = 'development'
+} = process.env;
+
+export const sequelize = new Sequelize({
+  dialect: 'postgres',
+  host: DB_HOST,
+  port: DB_PORT,
+  database: DB_NAME,
+  username: DB_USER,
+  password: DB_PASSWORD,
+  logging: NODE_ENV === 'development' ? console.log : false,
+  define: {
+    underscored: true,
+    underscoredAll: true,
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at'
+  }
+});
 
 export const syncDatabase = async (force = false) => {
-    try {
-        await sequelize.sync({ force });
-        console.log('Database synced successfully');
-    } catch (error) {
-        console.error('Error syncing database:', error);
-    }
+  try {
+    await sequelize.sync({ force });
+    console.log('Database synced successfully');
+  } catch (error) {
+    console.error('Error syncing database:', error);
+    throw error;
+  }
 };
 
-export { sequelize };
+export default sequelize;
