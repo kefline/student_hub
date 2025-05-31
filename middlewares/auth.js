@@ -3,7 +3,10 @@ import { verifyAccessToken } from '../utils/tokenManager.js';
 export const authenticate = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
+    console.log('Auth header:', authHeader); // Debug log
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('No valid auth header found'); // Debug log
       return res.status(401).json({
         success: false,
         error: 'No token provided'
@@ -11,15 +14,20 @@ export const authenticate = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
+    console.log('Token extracted:', token.substring(0, 20) + '...'); // Debug log - show first 20 chars
+
     const decoded = verifyAccessToken(token);
+    console.log('Decoded token result:', decoded ? 'success' : 'failed'); // Debug log
 
     if (!decoded) {
+      console.log('Token verification failed'); // Debug log
       return res.status(401).json({
         success: false,
         error: 'Invalid or expired token'
       });
     }
 
+    console.log('Decoded user:', { id: decoded.id, email: decoded.email, role: decoded.role }); // Debug log
     req.user = decoded;
     next();
   } catch (error) {

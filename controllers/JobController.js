@@ -12,18 +12,18 @@ class JobController extends BaseController {
     try {
       const job = await Job.create({
         ...jobData,
-        employerId,
-        status: 'draft'
+        employer_id: employerId,
+        status: jobData.status || 'draft'
       });
 
-      return {
-        success: true,
-        data: job
-      };
+      // Fetch job with employer details
+      const jobWithDetails = await this.getJobDetails(job.id);
+      return jobWithDetails;
     } catch (error) {
+      console.error('Create job error:', error);
       return {
         success: false,
-        error: error.message
+        error: error.message || 'Error creating job'
       };
     }
   }
@@ -40,7 +40,7 @@ class JobController extends BaseController {
           include: [{
             model: Profile,
             as: 'profile',
-            attributes: ['firstName', 'lastName', 'profilePhoto']
+            attributes: ['firstName', 'lastName', 'profile_photo']
           }]
         }]
       });
@@ -100,7 +100,7 @@ class JobController extends BaseController {
         };
       }
 
-      if (job.status !== 'active') {
+      if (job.status !== 'published') {
         return {
           success: false,
           error: 'Job is not accepting proposals'
@@ -216,12 +216,12 @@ class JobController extends BaseController {
           include: [{
             model: Profile,
             as: 'profile',
-            attributes: ['firstName', 'lastName', 'profilePhoto']
+            attributes: ['firstName', 'lastName', 'profile_photo']
           }]
         }],
         limit,
         offset,
-        order: [['createdAt', 'DESC']]
+        order: [['created_at', 'DESC']]
       });
 
       return {

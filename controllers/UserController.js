@@ -2,6 +2,10 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import BaseController from './BaseController.js';
 import { User, Profile } from '../models/index.js';
+import { generateTokens } from '../utils/tokenManager.js';
+
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || 'default_access_token_secret_key_123';
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'default_refresh_token_secret_key_456';
 
 class UserController extends BaseController {
   constructor() {
@@ -27,27 +31,36 @@ class UserController extends BaseController {
         email,
         password,
         role,
+        firstName,
+        lastName,
         ...otherData
       });
 
       // Create profile
       await Profile.create({
-        userId: user.id,
+        user_id: user.id,
         firstName,
         lastName
       });
 
-      // Generate token
-      const token = this.generateToken(user);
+      // Generate tokens
+      const tokens = await generateTokens(user);
 
       return {
         success: true,
         data: {
-          user,
-          token
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.role
+          },
+          tokens
         }
       };
     } catch (error) {
+      console.error('Registration error:', error);
       return {
         success: false,
         error: error.message
@@ -60,9 +73,11 @@ class UserController extends BaseController {
     try {
       const user = await User.findOne({
         where: { email },
+        attributes: ['id', 'email', 'password', 'firstName', 'lastName', 'role'],
         include: [{
           model: Profile,
-          as: 'profile'
+          as: 'profile',
+          attributes: ['id', 'user_id', 'profile_photo', 'verification_status']
         }]
       });
 
@@ -84,17 +99,30 @@ class UserController extends BaseController {
       // Update last login
       await user.update({ lastLogin: new Date() });
 
-      // Generate token
-      const token = this.generateToken(user);
+      // Generate tokens
+      const tokens = await generateTokens(user);
 
+      // Return minimal user data
       return {
         success: true,
         data: {
-          user,
-          token
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.role,
+            profile: user.profile ? {
+              id: user.profile.id,
+              photo: user.profile.profile_photo,
+              isVerified: user.profile.verification_status.is_verified
+            } : null
+          },
+          tokens
         }
       };
     } catch (error) {
+      console.error('Login error:', error);
       return {
         success: false,
         error: error.message
@@ -126,24 +154,31 @@ class UserController extends BaseController {
         // Create profile
         const names = displayName.split(' ');
         await Profile.create({
-          userId: user.id,
+          user_id: user.id,
           firstName: names[0],
           lastName: names[1] || '',
           profilePhoto: photos[0]?.value
         });
       }
 
-      // Generate token
-      const token = this.generateToken(user);
+      // Generate tokens
+      const tokens = await generateTokens(user);
 
       return {
         success: true,
         data: {
-          user,
-          token
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.role
+          },
+          tokens
         }
       };
     } catch (error) {
+      console.error('Social auth error:', error);
       return {
         success: false,
         error: error.message
@@ -242,6 +277,27 @@ class UserController extends BaseController {
       process.env.JWT_SECRET,
       { expiresIn }
     );
+  }
+
+  // Generate both access and refresh tokens
+  generateTokens(user) {
+    const accessToken = jwt.sign(
+      { 
+        id: user.id, 
+        email: user.email, 
+        role: user.role 
+      },
+      ACCESS_TOKEN_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    const refreshToken = jwt.sign(
+      { id: user.id },
+      REFRESH_TOKEN_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    return { accessToken, refreshToken };
   }
 }
 

@@ -105,6 +105,7 @@ Profile.init({
   modelName: 'Profile',
   tableName: 'profiles',
   timestamps: true,
+  underscored: true,
   indexes: [
     {
       fields: ['user_id']

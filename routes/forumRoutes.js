@@ -1,7 +1,7 @@
 import express from 'express';
 import ForumController from '../controllers/ForumController.js';
 import { authenticate } from '../middlewares/auth.js';
-import { validateForumPost, validateComment } from '../middlewares/validation.js';
+import { validatePost, validateComment } from '../middlewares/validation.js';
 
 const router = express.Router();
 
@@ -20,13 +20,13 @@ router.get('/:id', async (req, res) => {
 router.use(authenticate);
 
 // Create post
-router.post('/', validateForumPost, async (req, res) => {
+router.post('/', validatePost, async (req, res) => {
   const result = await ForumController.createPost(req.user.id, req.body);
   res.status(result.success ? 201 : 400).json(result);
 });
 
 // Update post
-router.put('/:id', validateForumPost, async (req, res) => {
+router.put('/:id', validatePost, async (req, res) => {
   const post = await ForumController.getPostDetails(req.params.id);
   if (!post.success) {
     return res.status(404).json(post);
