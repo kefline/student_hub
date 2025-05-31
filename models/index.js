@@ -3,6 +3,7 @@ import Profile from './Profile.js';
 import Job from './Job.js';
 import Forum from './Forum.js';
 import ForumCategory from './ForumCategory.js';
+import RefreshToken from './RefreshToken.js';
 
 // User - Profile associations
 User.hasOne(Profile, {
@@ -44,10 +45,21 @@ Forum.belongsTo(ForumCategory, {
   as: 'category'
 });
 
+// User - RefreshToken associations
+User.hasMany(RefreshToken, {
+  foreignKey: 'user_id',
+  as: 'refreshTokens'
+});
+RefreshToken.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
 export {
   User,
   Profile,
   Job,
   Forum,
-  ForumCategory
+  ForumCategory,
+  RefreshToken
 }; 
